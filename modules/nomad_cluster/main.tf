@@ -12,8 +12,6 @@ data "aws_subnets" "default" {
     name   = "vpc-id"
     values = [data.aws_vpc.nomad_vpc.id]
   }
-
-  vpc_id = data.aws_vpc.nomad_vpc.id
 }
 
 # data source for availability zones
