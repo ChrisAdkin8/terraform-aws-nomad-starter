@@ -7,7 +7,12 @@ data "aws_vpc" "nomad_vpc" {
 }
 
 # data source for subnet ids in VPC
-data "aws_subnet_ids" "default" {
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.nomad_vpc.id]
+  }
+
   vpc_id = data.aws_vpc.nomad_vpc.id
 }
 
@@ -50,29 +55,31 @@ resource "aws_autoscaling_group" "nomad_servers" {
   wait_for_capacity_timeout = "480s"
   health_check_grace_period = 15
   health_check_type         = "EC2"
-  vpc_zone_identifier       = data.aws_subnet_ids.default.ids
-  tags = [
-    {
-      key                 = "Name"
-      value               = "${var.name_prefix}-nomad-server"
-      propagate_at_launch = true
-    },
-    {
-      key                 = "Cluster-Version"
-      value               = var.consul_cluster_version
-      propagate_at_launch = true
-    },
-    {
-      key                 = "Environment-Name"
-      value               = "${var.name_prefix}-nomad"
-      propagate_at_launch = true
-    },
-    {
-      key                 = "owner"
-      value               = var.owner
-      propagate_at_launch = true
-    },
-  ]
+  vpc_zone_identifier       = data.aws_subnets.default.ids
+  
+  tag {
+    key                 = "Name"
+    value               = "${var.name_prefix}-nomad-server"
+    propagate_at_launch = true
+  }
+
+  tag {
+    key                 = "Cluster-Version"
+    value               = var.consul_cluster_version
+    propagate_at_launch = true
+  }
+
+  tag {
+    key                 = "Environment-Name"
+    value               = "${var.name_prefix}-nomad"
+    propagate_at_launch = true
+  }
+  
+  tag {
+    key                 = "owner"
+    value               = var.owner
+    propagate_at_launch = true
+  }
 
   lifecycle {
     create_before_destroy = true
